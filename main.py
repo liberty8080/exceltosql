@@ -5,6 +5,7 @@ from pymysql import ProgrammingError
 import sys
 import os
 from configparser import ConfigParser
+import traceback
 
 
 class Config:
@@ -73,7 +74,7 @@ class Column:
 
     @classmethod
     def parse(cls, cols):
-        comment = cols[1].value.strip()
+        comment = cols[1].value.strip() + ' ' + cols[8].value.strip()
         name = cols[2].value.strip()
         data_type = cols[3].value.strip()
         length = int(cols[4].value) if cols[4].value != '' else ''
@@ -81,6 +82,7 @@ class Column:
             pk = False
         else:
             pk = True
+
         return cls(comment, name, data_type, length, pk)
 
     def sql(self):
@@ -125,7 +127,7 @@ def get_table_name(cell: str):
     """
     :return: 表名和说明
     """
-    result = re.split(r'([a-zA-Z]+)\s*', cell)
+    result = re.split(r'([a-zA-Z_]+)\s*', cell)
     return result[1], result[2]
 
 
@@ -181,6 +183,7 @@ def print_sql(table_list):
     with open('./output.sql', 'w', encoding='utf-8') as f:
         for item in table_list:
             table = Table(item)
+            print('\n' + str(table))
             table_name, sql = table.sql()
             f.write(sql + '\n')
 
@@ -212,12 +215,13 @@ def cli(config: Config):
                 sys.exit(0)
     except FileNotFoundError:
         print("请检查输入路径是否正确", file=sys.stderr)
-    except (TypeError, IndexError):
+    except (TypeError, IndexError) as e:
         print("输入有误", file=sys.stderr)
+        traceback.print_exc()
 
 
 if __name__ == '__main__':
-    excel_path = r"C:\Users\zhao\Documents\Tencent Files\1847132713\FileRecv\【开发】物资管理系统数据库20200930.xlsx"
+    excel_path = r"C:\Users\Administrator\Documents\工作\新闻\新闻数据库.xls"
     # read_excel(excel_path)
     cfg = Config()
     cli(cfg)
